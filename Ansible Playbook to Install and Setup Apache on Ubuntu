@@ -1,0 +1,91 @@
+Installing ansible on Ubuntu
+First, update your system. The following command fetches the latest package:
+
+$ sudo apt update
+Ansible is available in the base repository of Ubuntu 20.04. To install ansible run the following command:
+
+$ sudo apt install ansible -y
+Then, check the ansible version using the command,
+
+$ ansible --version
+$ echo "myserver ansible_host=127.0.0.1 ansible_user=ubuntu" >> /etc/ansible/host
+Just check it by using the command,
+
+$ ansible myserver -m ping 
+Creating a Playbook
+Now, lets' create a playbook named 'apache.yml' to install and run the latest apache web server. 
+
+$ vi apache.yml
+Add the following content to the file
+
+---
+- hosts: myserver
+  become: true
+  vars:
+         - vars/default.yml
+- tasks:
+    - name: Install latest version of Apache
+      apt: name=apache2 update_cache=yes state=latest
+
+    - name: Create document root for your domain
+      file:
+        path: "/var/www/{{ http_host }}"
+        state: directory
+        owner: "{{ app_user }}"
+        mode: '0755'
+
+    - name: Copy your index page
+      template:
+        src: "files/index.html.j2"
+        dest: "/var/www/{{ http_host }}/index.html"
+
+    - name: Set up virtuahHost
+      template:
+        src: "files/apache.conf.j2"
+        dest: "/etc/apache2/sites-available/{{ http_conf }}"
+      notify: restart-apache
+
+    - name: "UFW firewall allow HTTP on port {{ http_port }}"
+      ufw:
+        rule: allow
+        port: "{{ http_port }}"
+        proto: tcp
+
+  handlers:
+    - name: restart-apache
+      service:
+        name: apache2
+        state: restarted
+        
+        ars/default.yml
+The default.yml file contains domain name, configuration file location and http port. Create the file and add the following.
+
+http_host: "mydomain.local"
+http_conf: "my_domain.conf"
+http_port: "80"
+files/apache.conf.j2
+The apache config template contains configuration for virtual host. The variable are defined within {{ }} and is obtained from vars file defined above. Create the file apache.conf.js and add the following content.
+
+<VirtualHost *:{{ http_port }}>
+   ServerAdmin webmaster@localhost
+   ServerName {{ http_host }}
+   ServerAlias www.{{ http_host }}
+   DocumentRoot /var/www/{{ http_host }}
+   ErrorLog ${APACHE_LOG_DIR}/error.log
+   CustomLog ${APACHE_LOG_DIR}/access.log combined
+</VirtualHost>
+files/index.html.j2
+Another template is your index file. Create the file and add the following content. You can modify as per your requirement.
+
+<html>
+   <head>
+       <title>{{ http_host }}</title>
+   </head>
+   <body>
+       <h1>Welcome to {{ http_host }}</h1>
+   </body>
+</html>
+Now you can execute ansible-playbook with the following command.
+
+$ ansible-playbook apache.yml --ask-become-pass
+This will also run apache on default port 80,  you can verify browsing localhost in your favorite browser.
