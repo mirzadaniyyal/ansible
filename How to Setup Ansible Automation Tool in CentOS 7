@@ -1,0 +1,151 @@
+Setup EPEL Repository
+# yum install epel-release
+Installing Ansible
+Now we can install Ansible on CentOS 7 using the 'yum' command that will install it including its required dependencies by choosing the 'y' key to proceed as shown.
+
+# yum install ansible
+ansible --version
+Keys based SSH authentication with Nodes
+In order to perform any deployment/management from the 'localhost' to remote host first we need to Generate keys on the Ansible server and copy public key to the client nodes. Run the below command on your Ansible server to generate its public and private keys.
+
+# ssh-keygen -t rsa -b 4096
+After generating the SSH Key, now copy it to the remote server by using following command to place SSH keys on remote hosts.
+
+# ssh-copy-id root@node1_ip
+If you are using any custom ssh port then mention it using the '-p' parameter in your command. You will be asked for the password of your client node, once you have provided the right password of your client node then it will be successfully authorized.
+
+# ssh-copy-id -p2178 root@node1_ip
+The authenticity of host '[72.25.70.83]:2178 ([72.25.70.83]:2178)' can't be established.
+ECDSA key fingerprint is 49:8a:9c:D9:35:le:09:3d:5f:31:43:a1:41:94:70:53.
+Are you sure you want to continue connecting (yes/no)? yes
+/usr/bin/ssh-copy-id: INFO: attempting to log in with the new key(s), to filter out any that are already installed
+/usr/bin/ssh-copy-id: INFO: 1 key(s) remain to be installed -- if you are prompted now it is to install the new keys
+Authorized uses only. All activity may be \ monitored and reported.
+root@72.25.70.83's password:
+
+Number of key(s) added: 1
+
+Now try logging into the machine, with: "ssh -p '2178' 'root@72.25.70.83'"
+and check to make sure that only the key(s) you wanted were added.
+You can also manually add the public rsa key of your controlling server to the clinet nodes. To do so login to your client node and follow the below steps.
+
+First copy the key from '/root/.ssh/id_rsa.pub' file and save it on the client node within the home directory of your server or any other user you wish to authenticate.
+
+[root@centos-7 .ssh]# cat id_rsa.pub
+ssh-rsa AAAAB3NzaC1yc2EAPNRNS/BVcT7XqHDuSvd8oncAjbNl2ZiYiU22MCNFKN8p/cgcblOZoZS0gjlQHpQLR1wm5hVu7PcxY/JAFX2phKyeZ+dbfQlAQ7HLRaaXWfuonelWgTCcs530bSg6XP3MTDRWjW0ZEFTLaOqVz+Yq2nUP3xRYmRKYNq2PhPRrkoBxnDGlmAsgGDm4gWz2TGE59uYHuXvY2Ys4OPeMFHAp0blR5nJIfVF40RB4uH0U79pp19qZ0vbghEvYUiyD4NMjqG13Ba4YYBQQIphe4GA3OTjBvjVmnmBCWZyDOcO+bWWyyKpabEEZOga3KnsoTw4iQ+d+iUyhPTZOvXaoOFUmrFQo5wWG229/GMJnYe1Qv0D3K3CcAQ== root@centos-7
+[root@node2 ~]# vi .ssh/authorized_keys
+ssh-rsa AAAAB3NzaC1yc2EAPNRNS/BVcT7XqHDuSvd8oncAjbNl2ZiYiU22MCNFKN8p/cgcblOZoZS0gjlQHpQLR1wm5hVu7PcxY/JAFX2phKyeZ+dbfQlAQ7HLRaaXWfuonelWgTCcs530bSg6XP3MTDRWjW0ZEFTLaOqVz+Yq2nUP3xRYmRKYNq2PhPRrkoBxnDGlmAsgGDm4gWz2TGE59uYHuXvY2Ys4OPeMFHAp0blR5nJIfVF40RB4uH0U79pp19qZ0vbghEvYUiyD4NMjqG13Ba4YYBQQIphe4GA3OTjBvjVmnmBCWZyDOcO+bWWyyKpabEEZOga3KnsoTw4iQ+d+iUyhPTZOvXaoOFUmrFQo5wWG229/GMJnYe1Qv0D3K3CcAQ== root@centos-7
+Save and quit file and you can access your both client nodes from the controll server without asking for root password.
+
+[root@centos-7 ~]# ssh -p 2178 root@node1_ip
+[root@centos-7 ~]# ssh -p 2178 root@node2_ip
+[root@centos-7 .ssh]# ssh -p 2178 root@72.25.10.83
+Authorized uses only. All activity may be \ monitored and reported.
+Last login: Sun Mar 27 21:42:09 2016 from 12.1.0.90
+
+[root@node1 ~]# exit
+logout
+Connection to 72.25.10.83 closed.
+
+[root@centos-7 .ssh]# ssh -p 2178 root@72.25.10.84
+The authenticity of host '[72.25.10.84]:2178 ([72.25.10.84]:2178)' can't be established.
+ECDSA key fingerprint is 49:8a:3c:85:55:61:79:1d:1f:21:33:s1:s1:fd:g0:53.
+Are you sure you want to continue connecting (yes/no)? yes
+Warning: Permanently added '[72.25.10.84]:2178' (ECDSA) to the list of known hosts.
+Authorized uses only. All activity may be \ monitored and reported.
+Last login: Sun Mar 27 22:03:56 2016 from 12.1.0.90
+[root@node2 ~]#
+[root@node2 ~]# exit
+logout
+Connection to 72.25.10.84 closed.
+Creating Inventory of Remote Hosts
+After setting up the SSH keys authentication between the Ansible server and its client nodes, now are going to configure those remote hosts on the Ansible control server by editing the '/etc/ansible/hosts' file. This file holds the inventory of remote hosts to which Ansible needs to connect through SSH for managing the systems.
+
+Open the file using any of your editor to to configure it.
+
+[root@centos-7 ~]# vim /etc/ansible/hosts
+# ansible -m ping 72.25.10.83
+# ansible -m ping 72.25.10.73
+You can also use belo command to ping all of your configured hosts.
+
+[root@centos-7 ~]# ansible all -m ping
+72.25.10.83 | success >> {
+"changed": false,
+"ping": "pong"
+}
+
+72.25.10.73 | success >> {
+"changed": false,
+"ping": "pong"
+}
+Executing Remote Commands
+In the above examples we've just used ping module to ping the remote hosts. There are various module available to execute commands on remote hosts. Now we will use 'command' module with 'ansible' command to get remote machine information like systems hostname information, free disk space and uptime as shown.
+
+# ansible -m command -a 'hostnamectl' 72.25.10.83
+# ansible -m command -a 'df -h' 72.25.10.83
+# ansible -m command -a 'uptime' 72.25.10.83
+# ansible -m command -a "uptime" web-servers
+Creating Playbooks in Ansible
+Playbooks are Ansible’s configuration management scripts used to manage configurations and deployments to remote machines. Playbooks contain set of policies that you want your remote systems to be implemented.
+
+Let's create your first playbook with name of file as 'httpd.yml', then we will configure a host to run an apache web server. Here you will choose the configurations to which machines in your infrastructure to target and what remote user to complete the tasks as shown in the configuration file.
+
+[root@centos-7 ~]# vi httpd.yml
+---
+- hosts: 72.25.10.83
+  remote_user: root
+  tasks:
+  - name: Installing Latest version of Apache
+    yum: pkg=httpd state=latest
+  - name: Copying the demo file
+    template: src=/etc/ansible/index.html dest=/var/www/html
+              owner=apache group=apache mode=0644
+  - name: (Enable it on System Boot)
+    service: name=httpd enabled=yes
+    notify:
+      - start apache
+  handlers:
+    - name: start apache
+      service: name=httpd state=started
+Save and close the file and then create a demo html file that will be placed in the default Document Root of remote hosts.
+
+[root@centos-7 ~]# vi /etc/ansible/index.html
+Installing Apache by Ansible
+
+Apache Web Server is installed by Ansible
+
+Congratulations, Apache is managed through Ansible
+Understanding Playbook Configurations
+As we have created our first playbook, now it's important to understand how it works. All YAML files should begin with (Three dashes) '---', which indicates the start of a document. Then the hosts line is a list of one or more groups or host patterns separated by colons. You can mention remote user account along with host.
+
+---
+- hosts: 72.25.10.83
+  remote_user: root
+Then we have set of tasks, where each play contains a list of tasks, those are executed in order, one at a time, against all machines matched by the host pattern, before moving on to the next task.
+
+tasks:
+- name: Installing Latest version of Apache
+  yum: pkg=httpd state=latest
+- name: Copying the demo file
+  template: src=/etc/ansible/index.html dest=/var/www/html
+            owner=apache group=apache mode=0644
+- name: (Enable it on System Boot)
+  service: name=httpd enabled=yes
+Every task should have a name, which is included in the output. This is output for us, so it is nice to have reasonably good descriptions of each task step. So, our First task will install latest version of apache, second will copy the demo html (/etc/ansible/index.html) to /var/www/html directory of remote hosts and third one will enable auto-start of apache service during system boot.
+
+After that ‘notify’ actions are triggered at the end of each block of tasks in a playbook, and will only be triggered once even if notified by multiple different tasks.
+
+notify:
+  - start apache
+The 'notify' item contains an item called “start apache”.This is a reference to a handler, which can perform certain functions when it is called from within a task. We will define the “start apache” handler below.
+
+handlers:
+  - name: start apache
+    service: name=httpd state=started
+Handlers are lists of tasks that only run when they have been told by a task that changes have occurred on the client system. As we have a handler that starts apache service after the package is installed.
+
+Running Playbook in Ansible
+After setting up your playbook configuration, you can run your playbook using below command.
+
+# ansible-playbook -l 72.25.10.83 httpd.yml
+After this open your browser and navigate to the IP address of your remote host mentioned in ansible inventory.
