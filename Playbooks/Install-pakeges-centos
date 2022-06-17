@@ -1,0 +1,11 @@
+---
+- hosts: centos
+  become: true
+
+  tasks:
+    - yum:
+        name:
+          - httpd
+        state: present
+    - service: name=httpd state=started enabled=yes
+    - raw: "echo Welcome to Solution.com | sudo tee /var/www/html/index.html"
