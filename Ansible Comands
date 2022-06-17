@@ -1,0 +1,36 @@
+
+ansible --version
+
+ansible -m ping all
+
+ansible all -a "whoami"
+
+ansible all -a "uname"
+
+ssh -vvv -i /root/.ssh/id_rsa 192.168.0.205
+
+ansible all -a "uname -a"
+
+ansible all -a "pwd"
+
+ansible all -a "python --version"
+
+ansible centos -a "python --version"
+
+ansible ubuntu -a "python3 --version"
+
+ansible both -a "python --version"
+
+ansible groupofgroups -a "python --version"
+
+ansible subset -a "python --version"
+
+ansible --list-host all
+
+ansible --list-host centos
+
+ansible --list-host both
+
+ansible --list-host \!both
+
+ansible --list-host centos:ubuntu
