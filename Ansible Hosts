@@ -1,0 +1,19 @@
+[list]
+manage-node-1-centos ansible_host=192.168.0.205
+manage-node-2-ubuntu ansible_host=192.168.0.235
+
+[centos]
+manage-node-1-centos ansible_host=192.168.0.205
+
+[ubuntu]
+manage-node-2-ubuntu ansible_host=192.168.0.235
+
+[both]
+manage-node-1-centos
+manage-node-2-ubuntu
+
+[groupofgroups:children]
+centos
+
+#[subset]
+#list[3:7]
